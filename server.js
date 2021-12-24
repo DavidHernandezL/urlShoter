@@ -37,7 +37,7 @@ mongoose.connect(process.env.URI)
 //Mongoose link model
 const linkModel = mongoose.Schema({
   original: String,
-  short: Number
+  short: String
 }); 
 
 const link = mongoose.model('link',linkModel);
@@ -79,7 +79,7 @@ async function linkCreate(req, res) {
 app.post('/api/shorturl', (req, res) => {
   dns.lookup(cutLink(req.body.url),(err) => {
     if(err){
-      res.json({error: 'Invalid url'});
+      res.json({ error: 'invalid url' });
       return
     }else{
       linkCreate(req, res);
@@ -92,5 +92,10 @@ app.post('/api/shorturl', (req, res) => {
 //Redirect to short url
 app.get('/api/shorturl/:short_url',async (req, res) => {
   const url = await link.findOne({short:req.params.short_url}); 
-  res.redirect(url.original);
+  if(url){
+    res.redirect(url.original);
+  }else{
+    res.json({ error: 'invalid url' });
+  }
+  
 });
