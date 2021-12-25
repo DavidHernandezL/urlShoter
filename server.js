@@ -3,7 +3,8 @@ const express = require('express');
 const cors = require('cors');
 //module required
 const mongoose = require('mongoose');
-const dns = require('dns');
+const {lookup} = require('dns');
+const { doesNotMatch } = require('assert');
 
 const app = express();
 
@@ -55,38 +56,18 @@ function cutLink(fullLink){
   }
 }
 
-async function linkCreate(req, res) {
-  let shortUrl = randomNumber(10000);
-  const linkSearched = await link.findOne({short: shortUrl});
-  if(linkSearched){
-    linkCreate();
-  }else{
-    const linkSearchedByName = await link.findOne({original: req.body.url});
-    if(linkSearchedByName){
-      res.json({ original_url : linkSearchedByName.original, short_url : linkSearchedByName.short});
-    }else{
-      var newLink = new link({
-        original: req.body.url,
-        short: shortUrl
-      });
-      await newLink.save();
-      res.json({ original_url : newLink.original, short_url : newLink.short});
-    }
-  }
-}
-
 //Create a new short url
 app.post('/api/shorturl', (req, res) => {
-  dns.lookup(cutLink(req.body.url),(err) => {
+  var originalLink = req.body.url;
+  var cutUrl = cutLink(originalLink);
+  lookup(cutUrl,(err) => {
     if(err){
-      res.json({ error: 'invalid url' });
-      return
-    }else{
-      linkCreate(req, res);
+      console.error(err);
+      res.json({error: 'invalid url'});
       return
     }
-  });
-  
+    res.json({original_url:cutUrl});
+  })
 });
 
 //Redirect to short url
