@@ -54,7 +54,7 @@ app.post('/api/shorturl', async (req, res) => {
   var originalLink = req.body.url;
   if(isUrl(originalLink)){
     var shortLink = randomNumber(10000);
-    const newUrl = new linkModel({
+    const newUrl = new link({
       original: originalLink,
       short: parseInt(shortLink)
     });
