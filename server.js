@@ -4,7 +4,7 @@ const cors = require('cors');
 //module required
 const mongoose = require('mongoose');
 const {lookup} = require('dns');
-const { doesNotMatch } = require('assert');
+const isUrl = require('is-valid-http-url')
 
 const app = express();
 
@@ -15,6 +15,7 @@ app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
 app.use(express.urlencoded({extended:false}));
+app.use(express.json());
 
 app.get('/', function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
@@ -47,27 +48,22 @@ function randomNumber(max){
   return Math.floor(Math.random() * max) + 1;
 }
 
-function cutLink(fullLink){
-  if(fullLink.includes('http')){
-    iCut = fullLink.indexOf('/') + 2;
-    return fullLink.substring(iCut);
-  }else{
-    return fullLink
-  }
-}
 
 //Create a new short url
-app.post('/api/shorturl', (req, res) => {
+app.post('/api/shorturl', async (req, res) => {
   var originalLink = req.body.url;
-  var cutUrl = cutLink(originalLink);
-  lookup(cutUrl,(err) => {
-    if(err){
-      console.error(err);
-      res.json({error: 'invalid url'});
-      return
-    }
-    res.json({original_url:cutUrl});
-  })
+  if(isUrl(originalLink)){
+    var shortLink = randomNumber(10000);
+    const newUrl = new linkModel({
+      original: originalLink,
+      short: parseInt(shortLink)
+    });
+
+    await newUrl.save();
+    res.json({ original_url : newUrl.original, short_url : newUrl.short});
+  }else{
+    res.json({error:'invalid url'});
+  }
 });
 
 //Redirect to short url
